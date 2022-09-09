@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+</head>
+  <body>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <style>
+            @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;400;600&display=swap");
+
+            * {
+                box-sizing: border-box;
+            }
+
+            #loginbox {
+                width: 100vw;
+                height: 100vh;
+                background-color: rgb(141, 93, 189);
+                color: white;
+                text-align: center;
+                position: relative;
+            }
+
+            #small-login {
+                margin: 0;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+            }
+
+            #rooms {
+                width: 20vw;
+                margin-left: 10vw;
+                margin-right: 10vw;
+                height: 5vh;
+                background-color:rgb(141, 93, 189);
+                color: white;
+                border: 1px solid rgb(141, 93, 189);
+                border-bottom: 2px solid white;
+            }
+
+            #username {
+                width: 20vw;
+                margin-left: 10vw;
+                margin-right: 10vw;
+                height: 5vh;
+                background-color:rgb(141, 93, 189);
+                color: white;
+                border: 1px solid rgb(141, 93, 189);
+                border-bottom: 2px solid white;
+            }
+
+            input:focus{
+                outline: none;
+            }
+
+            select:focus {
+                outline: none;
+            }
+
+
+            ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+                color: white;
+                opacity: 1; /* Firefox */
+            }
+
+            #submit {
+                width: 20vw;
+                height: 5vh;
+                margin: 5px;
+                background-color: white;
+                color: rgb(141, 93, 189);
+                border: 1px solid white;
+                cursor: pointer;
+            }
+
+            #btn {
+                background-color: #333;
+                border: none;
+                color: white;
+                width: 45px;
+                height: 50px;
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem;
+                transition: transform 0.3s ease-in-out;
+                cursor: pointer;
+            }
+
+            #roomsbtn {
+                background-color: #333;
+                border: none;
+                color: white;
+                width: 45px;
+                height: 50px;
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                padding: 1rem;
+                transition: transform 0.3s ease-in-out;
+                cursor: pointer;
+            }
+
+            h3 {
+                margin: 0 auto;
+                margin-bottom: 5px;
+                padding: 0px;
+            }
+
+            #btn.active {
+                transform: translateX(-150px);
+            }
+
+            #roomsbtn.active {
+                transform: translateX(-150px);
+            }
+
+            nav {
+                background-color: #333;
+                position: fixed;
+                top: 0;
+                right: 0;
+                height: 100vh;
+                padding: 2rem;
+                transform: translateX(100%);
+                transition: transform 0.3s ease-in-out;
+                color: white;
+            }
+
+            nav.active {
+                transform: translateX(0);
+            }
+
+            nav ul {
+                padding: 0;
+                list-style-type: none;
+                margin: 0;
+            }
+
+            nav ul li {
+                padding: 0 0;
+                margin: 4px;
+                cursor: pointer;
+            }
+
+            nav a {
+                color: white;
+                text-decoration: none;
+            }
+
+            body {
+                margin: 0; padding-bottom: 3rem;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            }
+
+            #messages {
+                list-style-type: none;
+                margin: 0;
+                padding: 0;
+            }
+            #messages > li {
+                padding: 0.5rem 1rem;
+            }
+            #messages > li:nth-child(odd) {
+                background: #efefef;
+            }
+
+            #typing {
+                padding: 0.5rem 1rem;
+                color: gray;
+                font-style: italic;
+            }
+
+            #form {
+                background: rgba(0, 0, 0, 0.15);
+                padding: 0.25rem;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                display: flex;
+                height: 3rem;
+                box-sizing: border-box;
+                backdrop-filter: blur(10px);
+            }
+
+            #input { 
+                border: none;
+                padding: 0 1rem;
+                flex-grow: 1;
+                border-radius: 2rem;
+                margin: 0.25rem;
+            }
+
+            #input:focus {
+                outline: none;
+            }
+
+            #form > button {
+                background: #333;
+                border: none;
+                padding: 0 1rem;
+                margin: 0.25rem;
+                border-radius: 3px;
+                outline: none;
+                color: #fff;
+                cursor: pointer;
+            }
+
+            input[type="file"] {
+                display: none;
+            }
+
+            .custom-file-upload {
+                font-size: 24px;
+                border: none;
+                padding: 0 1rem;
+                margin: 0.25rem;
+                cursor: pointer;
+            }
+            
+    </style>
+    <div id="loginbox">
+        <div id = "small-login">
+            <h2>Yibby's Chat App</h2>
+            <br/>
+                <select id="rooms" name="rooms">
+                </select>
+            <input type="text" placeholder="Enter your username" id="username" name="username" />
+            <input id="submit" type="button" value="Login" />
+        </div>
+    </div>
+
+    <ul id="messages"></ul>
+
+    <div id="bottom-box">
+        <p id="typing"></p>
+        <form id="form" action="">
+            <input id="input" autocomplete="off" />
+            <label class="custom-file-upload">
+                <input id="file" type="file" accept="image/png, image/gif, image/jpeg"/>
+                🖼️
+            </label>
+            <button>Send</button>
+          </form>
+    </div>
+
+    <!--hamburger button-->
+    <button id="btn">☰</button>
+
+    <nav id="nav">
+        <h3>Online</h3>
+        <ul id="online">
+
+        </ul>
+    </nav>
+    <!--hamburger button-->
+
+    <!--rooms button-->
+        <button id="roomsbtn">⌂</button>
+
+        <nav id="roomsnav">
+            <h3>Rooms</h3>
+            <ul id="roomslist">
+    
+            </ul>
+        </nav>
+    <!--rooms button-->
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+
+      const loginBox = document.getElementById("loginbox");
+      let roomslist = document.getElementById("roomslist");
+
+      let usernames = new Map();
+      var socket = io();
+      var messages = document.getElementById('messages');
+      var form = document.getElementById('form');
+      var input = document.getElementById('input');
+      var typing = document.getElementById('typing');
+      let selectedRoom = document.getElementById("rooms");
+
+      var isTyping = false;
+      var isTypingMessageSent = false;
+
+      let createRoom = document.createElement("li");
+      createRoom.innerHTML = "+ Create Room";
+      createRoom.id = "createroom";
+      roomslist.append(createRoom);
+
+      //rooms nav button
+      const roomsBtn = document.getElementById("roomsbtn");
+      const roomsNav = document.getElementById("roomsnav");
+      const btn = document.getElementById("btn");
+      const nav = document.getElementById("nav");
+
+        roomsBtn.addEventListener("click", () => {
+            roomsNav.classList.toggle("active");
+            roomsBtn.classList.toggle("active");
+            btn.classList.toggle("active");
+        });
+
+        //online nav button
+      btn.addEventListener("click", () => {
+        nav.classList.toggle("active");
+        btn.classList.toggle("active");
+        roomsBtn.classList.toggle("active");
+      });
+
+$('#file').bind('change', function(e){
+    var data = e.originalEvent.target.files[0];
+    readThenSendFile(data);      
+});
+
+function readThenSendFile(data){
+
+    var reader = new FileReader();
+    reader.onload = function(evt){
+        //msg is an object
+        var msg ={};
+        msg.file = evt.target.result;
+        msg.fileName = data.name;
+        socket.emit('base64 file', msg);
+    };
+    reader.readAsDataURL(data);
+}
+
+socket.on('base64 file', msg => {
+    //how to display base64 file on the screen?
+    let file;
+    const url = 'data:image/png;base64' + msg.file;
+
+    let pic = document.createElement("img");
+    pic.src = url;
+    pic.style.margin = "10px";
+    messages.append(pic);
+
+});
+
+
+
+        //add room to every client's rooms list UI
+        socket.on('new room', room => {
+            let navRoom = document.createElement("li");
+            navRoom.innerHTML = room;
+            navRoom.id = "nav" + room;
+            roomslist.insertBefore(navRoom, createRoom);
+
+            //add event listener to room so you can switch rooms
+            navRoom.addEventListener('click', ()=> {
+                    socket.emit('room', navRoom.innerHTML);
+                    navRoom.style.fontWeight = "bold";
+                    navRoom.style.color = "rgb(141, 93, 189)";
+                    
+                    let children = roomslist.children;
+                    for(let i=0; i<children.length; i++) {
+                        
+                        if (children[i] === navRoom) {
+                            children[i].style.fontWeight = "bold";
+                            children[i].style.color = "rgb(141, 93, 189)";
+                        }
+                        else {
+                            children[i].style.fontWeight = "normal";
+                            children[i].style.color = "white";
+                        }
+                        
+                    }
+
+            });
+
+        });
+
+
+      //add event listener for create room
+      createRoom.onclick = function() {
+          let newRoom = document.createElement("input");
+          newRoom.type = "text";
+          newRoom.placeholder = "Room name";
+          newRoom.id="newroom";
+          roomslist.append(newRoom);
+
+          let newRoomBtn = document.createElement("button");
+          newRoomBtn.id = "newroombtn";
+          newRoomBtn.innerHTML = "+";
+          roomslist.append(newRoomBtn);
+
+          //submit new room
+          newRoomBtn.onclick = function(){
+
+            //add room to the server's rooms array
+            socket.emit('new room', newRoom.value);
+
+              newRoom.remove();
+              newRoomBtn.remove();
+          };
+
+      };
+
+      socket.on('rooms for new user', (rooms) => {
+
+            for (let i=0; i<rooms.length; i++) {
+
+                //for the form
+                let room = document.createElement("option");
+                room.id = rooms[i];
+                room.value = rooms[i];
+                room.innerText = rooms[i];
+                selectedRoom.append(room);
+                room.addEventListener('click', ()=>{
+                    selectedRoom.value = room.value;
+                });
+
+                //ui
+                let navRoom = document.createElement("li");
+                navRoom.innerHTML = rooms[i];
+                navRoom.id = "nav" + rooms[i];
+                roomslist.insertBefore(navRoom, createRoom);
+
+                //add event listener to rooms menu so you can switch rooms
+                navRoom.addEventListener('click', ()=> {
+                    socket.emit('room', navRoom.innerHTML);
+                    navRoom.style.fontWeight = "bold";
+                    navRoom.style.color = "rgb(141, 93, 189)";
+                    
+                    let children = roomslist.children;
+                    for(let i=0; i<children.length; i++) {
+                        
+                        if (children[i] === navRoom) {
+                            children[i].style.fontWeight = "bold";
+                            children[i].style.color = "rgb(141, 93, 189)";
+                        }
+                        else {
+                            children[i].style.fontWeight = "normal";
+                            children[i].style.color = "white";
+                        }
+                        
+                    }
+
+                });
+            }
+
+      });
+
+      function checkTyping() {
+          if (input.value) {
+              isTyping = true;
+          } else {
+              isTyping = false;
+          }
+
+          if (isTyping && !isTypingMessageSent) {
+            socket.emit('someone is typing', " is typing...");
+            isTypingMessageSent = true;
+          }
+
+          if (!isTyping && isTypingMessageSent) {
+              //delete user is typing from the string
+              socket.emit('no longer typing', " is typing...");
+              isTypingMessageSent = false;
+          }
+      }
+
+      socket.on('someone is typing', (str)=>{
+            typing.innerText = str;
+      });
+
+      socket.on('no longer typing', (str) => {
+            typing.innerText = str;
+      });
+
+      setInterval(checkTyping, 100);
+    
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (input.value) {
+          //socket.broadcast.emit('chat message', usernames.get(socket.id) + ": " + input.value);
+          socket.emit('chat message', input.value);
+          //print message to user
+          var item = document.createElement('li');
+          item.textContent = "You: " + input.value;
+          item.style.color = "blue";
+          messages.appendChild(item);
+          window.scrollTo(0, document.body.scrollHeight);
+
+          input.value = '';
+        }
+      });
+    
+      socket.on('chat message', function(msg) {
+        var item = document.createElement('li');
+        item.textContent = msg;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+
+      socket.on('private message', (msg) => {
+            var item = document.createElement('li');
+            item.textContent = msg;
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+      });
+
+
+      //broadcast "____ has connected" message to clients
+      socket.on('c', function(msg) {
+        var item = document.createElement('li');
+        item.textContent = msg + " has connected";
+        item.style.fontStyle = "italic";
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+
+        //when user first submits their username:
+        document.getElementById("submit").addEventListener("click", ()=>{
+
+            //broadcast that a user connected to all clients
+            socket.emit('c', document.getElementById("username").value);
+
+            //update list of online users
+            socket.emit('get online users', "");
+
+            let room = document.getElementById("rooms").value;
+            //update socket's user object with which room they are in
+            socket.emit('room', room);
+
+            //change room to bold
+            let navRoom = document.getElementById("nav" + room);
+            navRoom.style.fontWeight = "bold";
+            navRoom.style.color = "rgb(141, 93, 189)";
+
+            loginBox.remove();
+        });
+
+        //generate all online users upon a user connecting
+        socket.on('get online users', (users) => {
+            let sender;
+            for (let user of users) {
+                if (socket.id === user.id) {
+                    sender = user;
+                }            
+            }
+
+            document.getElementById('online').innerHTML = "";
+            for (let user of users) {
+                let onlineUser = document.createElement("li");
+                onlineUser.innerHTML = user.name;
+                onlineUser.id = user.name;
+                onlineUser.className = user.id;
+                document.getElementById('online').append(onlineUser);
+
+                //add event listener for each user for private messaging option
+                //io.to(socketId).emit(/* ... */);
+                onlineUser.addEventListener('click', ()=> {
+                    //display: you are now messaging the user you clicked on IF it is not you
+
+                    if (socket.id !== onlineUser.className && sender.roomNum !== onlineUser.className) {
+
+                        var item = document.createElement('li');
+                        item.textContent = "You are now messaging " + onlineUser.innerHTML;
+                        item.style.fontStyle = "italic";
+                        messages.appendChild(item);
+                        window.scrollTo(0, document.body.scrollHeight);
+
+                        //emit private message event
+                        socket.emit('private message', onlineUser.innerHTML);
+                    }
+
+                });
+
+            }
+        });
+
+
+        socket.on('d', (username)=> {
+            var item = document.createElement('li');
+            item.textContent = username + " has disconnected";
+            item.style.fontStyle = "italic";
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+
+            let deletedUser = document.getElementById(username);
+            deletedUser.remove();
+        });
+
+    </script>
+  </body>
+</html>
