@@ -1,12 +1,3 @@
-//git clone https://github.com/socketio/chat-example.git
-/*
-Private messaging: only send "you are messaging ____" message once
-Send photos, videos, attachments.
-Purple heart rain!
-https://socket.io/demos/chat/
-
-*/
-//import { writeFile } from "fs";
 const fs = require("fs");
 
 class User {
@@ -76,9 +67,12 @@ io.on('connection', (socket) => {
         for (let i=0; i<users.length; i++) {
             if (users[i].id === socket.id) {
                 users[i].roomNum = room;
+                io.emit('c', users[i]);
             }
         }
         socket.join(room); 
+
+
       });
 
     socket.on('chat message', (msg) => {
@@ -90,9 +84,9 @@ io.on('connection', (socket) => {
             }
         }
 
-
         if (sender.isPrivate) {
-            io.to(sender.roomNum).emit('private message', sender.name + " (private message): " + msg);
+            io.to(sender.roomNum).emit(sender.name + " (private message): " + msg);
+            socket.emit('private chat message on sender screen', msg);
         } else {
             //with room number:
             socket.to(sender.roomNum).emit('chat message', sender.name + ": " + msg);
@@ -117,9 +111,8 @@ io.on('connection', (socket) => {
     });
       
     socket.on('c', (msg) => {
-        let user = new User(socket.id, msg, false, 1);
+        let user = new User(socket.id, msg, false, "Room 1");
         users.push(user);
-        io.emit('c', msg);
     });
 
     socket.on('get online users', (msg) => {
@@ -169,6 +162,3 @@ io.on('connection', (socket) => {
 server.listen(3000, () => {
   console.log('listening on *:3000');
 });
-
-
-//bug was fixed once i added a separate event for private message? why??
