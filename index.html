@@ -226,7 +226,7 @@
     </style>
     <div id="loginbox">
         <div id = "small-login">
-            <h2>Yibby's Chat App</h2>
+            <h2>Angelina's Chat App</h2>
             <br/>
                 <select id="rooms" name="rooms">
                 </select>
@@ -250,7 +250,7 @@
     </div>
 
     <!--hamburger button-->
-    <button id="btn">☰</button>
+    <button id="btn">웃</button>
 
     <nav id="nav">
         <h3>Online</h3>
@@ -354,8 +354,6 @@ socket.on('base64 file', msg => {
             //add event listener to room so you can switch rooms
             navRoom.addEventListener('click', ()=> {
                     socket.emit('room', navRoom.innerHTML);
-                    navRoom.style.fontWeight = "bold";
-                    navRoom.style.color = "rgb(141, 93, 189)";
                     
                     let children = roomslist.children;
                     for(let i=0; i<children.length; i++) {
@@ -474,19 +472,20 @@ socket.on('base64 file', msg => {
       });
 
       setInterval(checkTyping, 100);
+
+      socket.on("private chat message on sender screen", (msg) => {
+          //print message to sender
+          var item = document.createElement('li');
+          item.textContent = "You (private message): " + msg;
+          item.style.color = "blue";
+          messages.appendChild(item);
+          window.scrollTo(0, document.body.scrollHeight);
+      })
     
       form.addEventListener('submit', function(e) {
         e.preventDefault();
         if (input.value) {
-          //socket.broadcast.emit('chat message', usernames.get(socket.id) + ": " + input.value);
           socket.emit('chat message', input.value);
-          //print message to user
-          var item = document.createElement('li');
-          item.textContent = "You: " + input.value;
-          item.style.color = "blue";
-          messages.appendChild(item);
-          window.scrollTo(0, document.body.scrollHeight);
-
           input.value = '';
         }
       });
@@ -507,9 +506,9 @@ socket.on('base64 file', msg => {
 
 
       //broadcast "____ has connected" message to clients
-      socket.on('c', function(msg) {
+      socket.on('c', function(user) {
         var item = document.createElement('li');
-        item.textContent = msg + " has connected";
+        item.textContent = user.name + " has connected to " + user.roomNum;
         item.style.fontStyle = "italic";
         messages.appendChild(item);
         window.scrollTo(0, document.body.scrollHeight);
